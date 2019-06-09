@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sma 
+  labels:
+    app: sma 
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_"}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{-  if .Values.sma.service.annotations }}
+  annotations:
+{{ toYaml .Values.sma.service.annotations | indent 4}}
+{{- end }}
+spec:
+  type: {{ .Values.sma.service.type }}
+  ports:
+    - port: {{ .Values.sma.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: sma 
+  selector:
+    app: sma
+    release: {{ .Release.Name }}

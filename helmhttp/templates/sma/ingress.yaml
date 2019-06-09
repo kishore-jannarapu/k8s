@@ -1,0 +1,25 @@
+{{- if .Values.sma.ingress.enabled -}}
+{{- $ingressPath := .Values.sma.ingress.path -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: sma 
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_"}}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- with .Values.sma.ingress.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: sma 
+          servicePort: http
+        path: /smatest/?(.*)
+{{- end }}

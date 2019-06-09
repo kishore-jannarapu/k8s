@@ -1,0 +1,75 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: sma 
+  labels:
+    app: sma
+    chart: {{.Chart.Name }}-{{ .Chart.Version |replace "+" "_"  }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.sma.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      app: sma
+      release: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 25% 
+  minReadySeconds: 10    
+  template:
+    metadata:
+      labels:
+        app: sma 
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-sma
+          image: "{{ .Values.sma.deployment.image.repository }}:{{ .Values.sma.deployment.image.tag }}"
+          imagePullPolicy: {{ .Values.sma.deployment.image.pullPolicy }}
+          env:
+            - name: MSSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sma-secret
+                  key: mssql-user
+            - name: MSSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sma-secret
+                  key: mssql-password
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080 
+              scheme: HTTP 
+            initialDelaySeconds: 200
+            periodSeconds: 3
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080 
+              scheme: HTTP 
+            initialDelaySeconds: 400
+            periodSeconds: 3
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
